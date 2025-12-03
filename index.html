@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Hotel Booking Assistant</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Poppins', sans-serif;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    body.dark-mode {
+      background: radial-gradient(circle at top, #1f2937, #111827);
+      color: white;
+    }
+
+    body.light-mode {
+      background: #f9fafb;
+      color: #111827;
+    }
+
+    .chat-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      position: relative;
+      z-index: 2;
+    }
+
+    .chat-box {
+      width: 100%;
+      max-width: 600px;
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 600px;
+    }
+
+    body.dark-mode .chat-box {
+      background: rgba(255, 255, 255, 0.07);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    body.light-mode .chat-box {
+      background: #ffffff;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .chat-header {
+      text-align: center;
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .toggle-btn {
+      position: absolute;
+      top: 0;
+      right: 0;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.2rem;
+      color: inherit;
+    }
+
+    .chat-container {
+      flex: 1;
+      overflow-y: auto;
+      margin-bottom: 15px;
+      padding-right: 5px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-message {
+      padding: 14px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      font-size: 0.95rem;
+      max-width: 85%;
+      word-wrap: break-word;
+      line-height: 1.5;
+    }
+
+    .user-message {
+      background-color: rgba(59, 130, 246, 0.3);
+      align-self: flex-end;
+      text-align: right;
+    }
+
+    body.light-mode .user-message {
+      background-color: rgba(59, 130, 246, 0.1);
+    }
+
+    .bot-message {
+      background-color: rgba(255, 255, 255, 0.1);
+      align-self: flex-start;
+    }
+
+    body.light-mode .bot-message {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .chat-input {
+      display: flex;
+      border-radius: 30px;
+      padding: 10px;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.08);
+      position: relative;
+    }
+
+    body.light-mode .chat-input {
+      background: #f0f0f0;
+    }
+
+    .chat-input input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      font-size: 1rem;
+      padding: 0 10px;
+      outline: none;
+      color: inherit;
+    }
+
+    .chat-input button {
+      background: #6366F1;
+      color: white;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background 0.3s;
+    }
+
+    .chat-input button:hover {
+      background: #4F46E5;
+    }
+
+    .filter-dropdown {
+      position: relative;
+      margin-right: 8px;
+    }
+
+    .filter-button {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 20px;
+      background: #e5e7eb;
+      font-family: 'Poppins', sans-serif;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    body.dark-mode .filter-button {
+      background: rgba(255, 255, 255, 0.08);
+      color: white;
+    }
+
+    .filter-options {
+      position: absolute;
+      top: 110%;
+      left: 0;
+      background: white;
+      border-radius: 10px;
+      padding: 10px;
+      display: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      z-index: 5;
+      width: max-content;
+    }
+
+    body.dark-mode .filter-options {
+      background: #1f2937;
+      color: white;
+    }
+
+    .filter-options label {
+      display: block;
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+    }
+
+    .filter-options input {
+      margin-right: 6px;
+    }
+
+    .background {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      top: 0;
+      left: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .star {
+      position: absolute;
+      background: white;
+      border-radius: 50%;
+      animation: twinkle linear infinite;
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    strong {
+      color: #3b82f6;
+    }
+
+    em {
+      color: #f59e0b;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div class="background" id="starBackground"></div>
+
+  <div class="chat-wrapper">
+    <div class="chat-box">
+      <div class="chat-header">
+        <h2><i class="fas fa-hotel"></i> Hotel Buddy</h2>
+        <p>Your AI assistant for hotel bookings</p>
+        <button class="toggle-btn" id="themeToggle" title="Toggle Dark/Light Mode"><i class="fas fa-moon"></i></button>
+      </div>
+      <div class="chat-container" id="chatContainer">
+        <div class="chat-message bot-message">
+          <p>Welcome! 🏨 Let me help you find the perfect hotel. Try typing <strong>"Hotels in Mumbai near airport"</strong>.</p>
+        </div>
+      </div>
+      <div class="chat-input">
+        <div class="filter-dropdown">
+          <button class="filter-button" id="filterBtn">Filters <i class="fas fa-chevron-down"></i></button>
+          <div class="filter-options" id="filterOptions">
+            <label><input type="checkbox" value="pool" /> Pool</label>
+            <label><input type="checkbox" value="gym" /> Gym</label>
+            <label><input type="checkbox" value="restaurant" /> Restaurant</label>
+            <label><input type="checkbox" value="price" /> Price: Low to High</label>
+            <label><input type="checkbox" value="rating" /> Rating: High to Low</label>
+          </div>
+        </div>
+        <input type="text" id="userInput" placeholder="Type a location or hotel..." />
+        <button id="sendBtn"><i class="fas fa-paper-plane"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const sendBtn = document.getElementById("sendBtn");
+    const userInput = document.getElementById("userInput");
+    const chatContainer = document.getElementById("chatContainer");
+    const filterBtn = document.getElementById("filterBtn");
+    const filterOptions = document.getElementById("filterOptions");
+
+    sendBtn.addEventListener("click", sendMessage);
+    userInput.addEventListener("keypress", e => { if (e.key === "Enter") sendMessage(); });
+
+    filterBtn.addEventListener("click", () => {
+      filterOptions.style.display = filterOptions.style.display === "block" ? "none" : "block";
+    });
+
+    window.addEventListener("click", (e) => {
+      if (!filterBtn.contains(e.target) && !filterOptions.contains(e.target)) {
+        filterOptions.style.display = "none";
+      }
+    });
+
+    function getSelectedFilters() {
+      const selected = Array.from(document.querySelectorAll("#filterOptions input:checked")).map(el => el.value);
+      return selected.join(", ");
+    }
+
+    function addMessage(text, sender) {
+      const msg = document.createElement("div");
+      msg.classList.add("chat-message", sender === "user" ? "user-message" : "bot-message");
+      msg.innerHTML = sender === "bot" ? formatBotText(text) : `<p>${text}</p>`;
+      chatContainer.appendChild(msg);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function formatBotText(text) {
+      text = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+      text = text.replace(/\*(.*?)\*/g, "<em>$1</em>");
+      text = text.replace(/\n/g, "<br>");
+      return `<p>${text}</p>`;
+    }
+
+    async function sendMessage() {
+      const message = userInput.value.trim();
+      const filter = getSelectedFilters();
+      if (!message) return;
+
+      addMessage(message + (filter ? ` [Filters: ${filter}]` : ""), "user");
+      userInput.value = "";
+
+      addMessage("Typing...", "bot");
+
+      try {
+        const res = await fetch("http://localhost:5000/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message, filter })
+        });
+
+        const data = await res.json();
+        const replies = document.querySelectorAll(".bot-message");
+        const last = replies[replies.length - 1];
+        if (last) last.remove();
+
+        addMessage(data.response, "bot");
+      } catch (err) {
+        console.error(err);
+        addMessage("Sorry, something went wrong with the bot.", "bot");
+      }
+    }
+
+    function generateStars() {
+      const background = document.getElementById("starBackground");
+      for (let i = 0; i < 100; i++) {
+        const star = document.createElement("div");
+        star.classList.add("star");
+        const size = Math.random() * 2 + 1;
+        const duration = Math.random() * 3 + 2;
+        star.style.width = `${size}px`;
+        star.style.height = `${size}px`;
+        star.style.left = `${Math.random() * 100}%`;
+        star.style.top = `${Math.random() * 100}%`;
+        star.style.animationDuration = `${duration}s`;
+        background.appendChild(star);
+      }
+    }
+
+    generateStars();
+
+    const themeToggle = document.getElementById("themeToggle");
+    const body = document.body;
+
+    function setTheme(mode) {
+      body.classList.toggle("light-mode", mode === "light");
+      body.classList.toggle("dark-mode", mode === "dark");
+      themeToggle.innerHTML = `<i class="fas fa-${mode === "light" ? "moon" : "sun"}"></i>`;
+      localStorage.setItem("theme", mode);
+    }
+
+    themeToggle.addEventListener("click", () => {
+      const current = body.classList.contains("light-mode") ? "light" : "dark";
+      setTheme(current === "light" ? "dark" : "light");
+    });
+
+    setTheme(localStorage.getItem("theme") || "dark");
+  </script>
+</body>
+</html>
